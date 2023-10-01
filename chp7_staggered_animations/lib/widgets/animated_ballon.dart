@@ -6,9 +6,8 @@ class AnimatedBalloonWidget extends StatefulWidget {
 }
 
 class _AnimatedBalloonWidgetState extends State<AnimatedBalloonWidget>
-    with TickerProviderStateMixin {
-  late AnimationController _controllerFloatUp;
-  late AnimationController _controllerGrowSize;
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
   late Animation<double> _animationFloatUp;
   late Animation<double> _animationGrowSize;
   double _balloonHeight = 0.0;
@@ -18,25 +17,17 @@ class _AnimatedBalloonWidgetState extends State<AnimatedBalloonWidget>
   @override
   void initState() {
     super.initState();
-
-    _controllerFloatUp = AnimationController(
+    _controller = AnimationController(
       duration: Duration(seconds: 4),
       vsync: this,
     );
 
-    _controllerGrowSize = AnimationController(
-      duration: Duration(seconds: 2),
-      vsync: this,
-    );
-
-    _controllerFloatUp.forward();
-    _controllerGrowSize.forward();
+    _controller.forward();
   }
 
   @override
   void dispose() {
-    _controllerFloatUp.dispose();
-    _controllerGrowSize.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -46,13 +37,19 @@ class _AnimatedBalloonWidgetState extends State<AnimatedBalloonWidget>
     _balloonWidth = MediaQuery.of(context).size.height / 3;
     _balloonBottomLocation = MediaQuery.of(context).size.height - _balloonHeight;
 
-    _animationFloatUp = Tween(begin: _balloonBottomLocation, end: 0.0)
-        .animate(CurvedAnimation(
-        parent: _controllerFloatUp, curve: Curves.fastOutSlowIn));
+    _animationFloatUp = Tween(begin: _balloonBottomLocation, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Interval(0.0, 1.0, curve: Curves.fastOutSlowIn),
+      ),
+    );
 
-    _animationGrowSize = Tween(begin: 50.0, end: _balloonWidth)
-        .animate(CurvedAnimation(
-        parent: _controllerGrowSize, curve: Curves.elasticInOut));
+    _animationGrowSize = Tween(begin: 50.0, end: _balloonWidth).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Interval(0.0, 0.5, curve: Curves.elasticInOut),
+      ),
+    );
 
     return AnimatedBuilder(
       animation: _animationFloatUp,
@@ -67,12 +64,10 @@ class _AnimatedBalloonWidgetState extends State<AnimatedBalloonWidget>
       },
       child: GestureDetector(
         onTap: () {
-          if (_controllerFloatUp.isCompleted) {
-            _controllerFloatUp.reverse();
-            _controllerGrowSize.reverse();
+          if (_controller.isCompleted) {
+            _controller.reverse();
           } else {
-            _controllerFloatUp.forward();
-            _controllerGrowSize.forward();
+            _controller.forward();
           }
         },
         child: Image.asset(
